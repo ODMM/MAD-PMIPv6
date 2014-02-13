@@ -1,0 +1,65 @@
+.\" $Id: mad-pmip6d.tmpl 1.4 05/05/16 13:13:41+03:00 anttit@tcs.hut.fi $
+.TH mad-pmip6d 1 "June 30, 2011" "" "Mobility Anchors Distribution for Proxy Mobile IPv6 Daemon"
+.SH NAME
+mad-pmip6d \- Mobility Anchors Distribution for PMIPv6 implementation based on MIPL
+.SH SYNOPSIS
+.B mad-pmip6d [options]
+.sp
+.SH DESCRIPTION
+
+MAD-PMIPv6 implementation
+
+.SH OPTIONS
+.IP "\fB\-V, \-\-version\fP"
+Display version information and copyright
+.IP "\fB\-?, \-h, \-\-help\fP"
+Display this help text
+.IP "\fB\-c <file>\fP"
+Read configuration from <file>.  If option is not present, default
+path (%etc%/mad-pmip6d.conf) is used.
+
+.PP
+These options override values read from config file:
+.IP "\fB\-d <number>\fP"
+Set debug level (0-10)
+.IP "\fB\-l <file>\fP"
+Write debug log to <file> instead of stderr
+.IP "\fB\-C, \-\-correspondent-node\fP"
+Node is CN
+.IP "\fB\-H, \-\-home-agent\fP"
+Node is HA
+.IP "\fB\-M, \-\-mobile-node\fP"
+Node is MN
+.IP "\fB\-m, \-\-mobility-access-router\fP"
+Node is MAR (MAD-PMIPv6 architecture)
+.IP "\fB\-a, \-\-central-mobility-database\fP"
+Node is CMD (MAD-PMIPv6 architecture)
+.IP "\fB\-i, \-\-dmm-tunneling\fP"
+With IPv6-in-IPv6 tunneling      (MAD-PMIPv6 architecture)
+.IP "\fB\-p, \-\-dmm-dyn-tunneling\fP"
+Dynamicaly create/delete tunnels (MAD-PMIPv6 architecture)
+.IP "\fB\-L, \-\-cmd-address\fP"
+CMD address exposed to MARs
+.IP "\fB\-N, \-\-mar-ingress-address\fP"
+MAR ingress address (towards MNs)
+.IP "\fB\-E, \-\-mar-egress-address\fP"
+MAR egress address  (towards CMD and rest of nets)
+
+.SH FILES
+
+%etc%/mad-pmip6d.conf
+%etc%/dmm-users.conf
+
+.SH SEE ALSO
+.BR mad-pmip6d.conf (5),
+.BR mipv6 (7),
+.PP
+RFC6275: Mobility Support in IPv6,
+.PP
+RFC3776: Using IPsec to Protect Mobile IPv6 Signaling Between Mobile
+Nodes and Home Agents,
+.PP
+RFC5213: Proxy Mobile IPv6.
+.PP
+draft-bernardos-dmm-distributed-anchoring-03: PMIPv6-based distributed anchoring
+draft-bernardos-dmm-pmip-02: A PMIPv6-based solution for Distributed Mobility Management

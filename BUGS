@@ -1,0 +1,18 @@
+Known issues in MAD-PMIPv6
+------------------------
+
+If you run into any of the issues below, don't bother reporting them
+unless you can provide a fix, as we are already aware of them.
+
+General issues
+--------------
+
+* MAD-PMIPv6 does not support IPsec
+
+* PBUs and PBAs sequence numbers are not properly parsed hence some
+  ordering mismatch might arise
+
+* MARs do not track IP flows, hence MARs anchoring inactive flows
+  will not be de-registered
+
+* Number of MNs is limited to 16

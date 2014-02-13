@@ -1,0 +1,12 @@
+Mobile IPv6 for Linux core implementation team is Ville Nuorvala
+<vnuorval@tcs.hut.fi> and Antti J. Tuominen <anttit@tcs.hut.fi>.
+
+The core team has in the past included Jaakko Laine and Henrik
+Petander.  Code has been contributed by several individuals.  See
+THANKS for listing.  See libnetlink/README for information regarding
+libnetlink.
+
+The Mobility Anchors Distribution for Proxy Mobile IPv6 implementation
+for GNU/Linux is by Fabio Giust <odmm@odmm.net>,
+NETCOM research group, Department of Telematics Engineering,
+University Carlos III of Madrid, Spain.

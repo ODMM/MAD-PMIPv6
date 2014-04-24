@@ -48,6 +48,7 @@
 int rcv_fd;
 int pmip_socket_fd;
 pthread_t hostapd_listener;
+extern struct ingress_if_info ingress_if;
 
 void hostapd_associate(uint8_t *mn_ll_id)
 {
@@ -60,7 +61,6 @@ void hostapd_associate(uint8_t *mn_ll_id)
 		temp.s6_addr[i+10] = mn_ll_id[i];
 	}
 	msg.mn_iid = EUI48_to_EUI64(temp);
-	struct ingress_if_info ingress_if;
 	msg.iif = ingress_if.eif_id;
 	msg.msg_event = hasRS;
 	mar_fsm(&msg);

@@ -124,7 +124,7 @@ int mar_dereg_dmm(dmm_entry * bce)
 	dbg("# of binding entries %d\n", usercount);
 	if (usercount == 1) {
 		dbg("Deleting routing entry for uplink traffic\n");
-		route_del(bce->tunnel, RT6_TABLE_DMM+bce->tunnel, IP6_RT_PRIO_MIP6_FWD, &in6addr_any, 0, &in6addr_any, 0, NULL);
+		route_del(bce->tunnel, RT6_TABLE_DMM+(bce->tunnel % RT6_TABLE_DMM), IP6_RT_PRIO_MIP6_FWD, &in6addr_any, 0, &in6addr_any, 0, NULL);
 	}
 	dbg("Deleting tunnel...\n");
 	tunnel_del(bce->tunnel, 0, 0);
@@ -155,7 +155,7 @@ int mar_dereg(dmm_entry * bce, int propagate)
 		dbg("# of binding entries %d\n", usercount);
 		if (usercount == 1) {
 				dbg("Deleting routing entry for uplink traffic\n");
-				route_del(ptr->tunnel_id, RT6_TABLE_DMM+ptr->tunnel_id, IP6_RT_PRIO_MIP6_FWD, &in6addr_any, 0, &in6addr_any, 0, NULL);
+				route_del(ptr->tunnel_id, RT6_TABLE_DMM+(ptr->tunnel_id % RT6_TABLE_DMM), IP6_RT_PRIO_MIP6_FWD, &in6addr_any, 0, &in6addr_any, 0, NULL);
 		}
 		if (ingress_if.dlif_enabled) {
 			mar_remove_route(&ptr->mn_prefix, 64, ptr->dlif_id, ptr->tunnel_id);
@@ -218,7 +218,7 @@ int mar_end_registration(dmm_entry * bce, int iif)
 			usercount = tunnel_getusers(bce->mar_list->tunnel_id);
 			dbg("# of binding entries %d\n", usercount);
 			dbg("Add routing entry for uplink traffic\n");
-			route_add(bce->mar_list->tunnel_id, RT6_TABLE_DMM+bce->mar_list->tunnel_id, RTPROT_MIP, 0, IP6_RT_PRIO_MIP6_FWD, &in6addr_any, 0, &in6addr_any, 0, NULL);
+			route_add(bce->mar_list->tunnel_id, RT6_TABLE_DMM+(bce->mar_list->tunnel_id % RT6_TABLE_DMM), RTPROT_MIP, 0, IP6_RT_PRIO_MIP6_FWD, &in6addr_any, 0, &in6addr_any, 0, NULL);
 			if (ingress_if.dlif_enabled) {
 				dlif = setup_dlif(&bce->mn_hw_address, &bce->mar_list->mar_hw_address, &bce->mar_list->mn_prefix, 0);
 				if (dlif) {
@@ -240,7 +240,7 @@ int mar_end_registration(dmm_entry * bce, int iif)
 				usercount = tunnel_getusers(ptr->tunnel_id);
 				dbg("# of binding entries %d\n", usercount);
 				dbg("Add routing entry for uplink traffic\n");
-				route_add(ptr->tunnel_id, RT6_TABLE_DMM+ptr->tunnel_id, RTPROT_MIP, 0, IP6_RT_PRIO_MIP6_FWD, &in6addr_any, 0, &in6addr_any, 0, NULL);
+				route_add(ptr->tunnel_id, RT6_TABLE_DMM+(ptr->tunnel_id % RT6_TABLE_DMM), RTPROT_MIP, 0, IP6_RT_PRIO_MIP6_FWD, &in6addr_any, 0, &in6addr_any, 0, NULL);
 				if (ingress_if.dlif_enabled) {
 					dlif = setup_dlif(&bce->mn_hw_address, &ptr->mar_hw_address, &ptr->mn_prefix, 0);
 					if (dlif) {
@@ -300,7 +300,7 @@ int mar_end_registration_dmm(dmm_entry * bce, int iif)
 			dbg("# of binding entries %d\n", usercount);
 			if (usercount == 1) {
 				dbg("Deleting routing entry for uplink traffic\n");
-				route_del(ptr->tunnel_id, RT6_TABLE_DMM+ptr->tunnel_id, IP6_RT_PRIO_MIP6_FWD, &in6addr_any, 0, &in6addr_any, 0, NULL);
+				route_del(ptr->tunnel_id, RT6_TABLE_DMM+(ptr->tunnel_id % RT6_TABLE_DMM), IP6_RT_PRIO_MIP6_FWD, &in6addr_any, 0, &in6addr_any, 0, NULL);
 			}
 			if (ingress_if.dlif_enabled) {
 				mar_remove_route(&ptr->mn_prefix, 64, ptr->dlif_id, ptr->tunnel_id);
@@ -830,7 +830,7 @@ void mar_list_clean_all(struct dmm_entry *bce)
 		dbg("# of binding entries %d\n", usercount);
 		if (usercount == 1) {
 			dbg("Deleting routing entry for uplink traffic\n");
-			route_del(ptr->tunnel_id, RT6_TABLE_DMM+ptr->tunnel_id, IP6_RT_PRIO_MIP6_FWD, &in6addr_any, 0, &in6addr_any, 0, NULL);
+			route_del(ptr->tunnel_id, RT6_TABLE_DMM+(ptr->tunnel_id % RT6_TABLE_DMM), IP6_RT_PRIO_MIP6_FWD, &in6addr_any, 0, &in6addr_any, 0, NULL);
 		}
 		if (ingress_if.dlif_enabled) {
 			mar_remove_route(&ptr->mn_prefix, 64, ptr->dlif_id, ptr->tunnel_id);

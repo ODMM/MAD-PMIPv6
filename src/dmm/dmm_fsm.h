@@ -57,7 +57,7 @@
 //-----------------------------------------------------------------------------
 protected_dmm_fsm(int mar_init_fsm(void);)
 
-protected_dmm_fsm(int mar_fsm(msg_info_t *info);)
+protected_dmm_fsm(void mar_fsm(msg_info_t *info);)
 
 protected_dmm_fsm(int cmd_fsm(msg_info_t *info);)
 

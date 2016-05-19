@@ -109,7 +109,7 @@ protected_mar_proc(int mar_force_update_registration(dmm_entry * bce, int iif);)
 
 protected_mar_proc(int mar_update_binding_entry(dmm_entry * bce, msg_info_t * info);)
 
-protected_mar_proc(int mar_create_binding_entry(msg_info_t * info, dmm_entry * bce);)
+protected_mar_proc(void mar_create_binding_entry(msg_info_t * info, dmm_entry * bce);)
 
 private_mar_proc(int mar_send_ra(struct in6_addr *mn_prefix, int interface, struct in6_addr *dst, int dup);)
 

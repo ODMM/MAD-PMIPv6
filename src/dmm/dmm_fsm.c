@@ -59,14 +59,12 @@ int mar_init_fsm(void)
 		return 0;
 }
 //---------------------------------------------------------------------------------------------------------------------
-int mar_fsm(msg_info_t * info)
+void mar_fsm(msg_info_t * info)
 {
-	int result = 0;
 	int aaa_result = 0;
 	dmm_entry *bce = NULL;
-	struct in6_addr prefix;
-	struct in6_addr hw_address = EUI64_to_EUI48(info->mn_iid); //we already have this data in info
-	//int type = dmm_cache_exists(&conf.OurAddress, &hw_address);
+	struct in6_addr *prefix;
+	struct in6_addr hw_address = EUI64_to_EUI48(info->mn_iid);
 	int mutex_return_code;
 
 	mutex_return_code = pthread_rwlock_wrlock(&fsm_lock);
@@ -80,21 +78,23 @@ int mar_fsm(msg_info_t * info)
 	case hasRS:
 		if (!bce) {
 			dbg("New MN is found sending RS, checking AAA ...\n");
-			prefix = mnid_hnp_map(hw_address, &aaa_result);
-			if (aaa_result >= 0) {
-				dbg("AAA success: prefix to assign: %x:%x:%x:%x:%x:%x:%x:%x \n", NIP6ADDR(&info->mn_prefix));
-				info->mn_prefix = prefix;
+			prefix = mnid_hnp_map(&hw_address);
+			if (prefix) {
+				//dbg("AAA success: prefix to assign: %x:%x:%x:%x:%x:%x:%x:%x \n", NIP6ADDR(prefix));
+				memcpy(&info->mn_prefix, prefix, sizeof(struct in6_addr));
 				/* allocate memory for BCE */
 				bce = dmm_cache_alloc(BCE_TEMP);
-				/* Fill BCE with MN's parameters */
-				result = mar_create_binding_entry(info, bce);
-				if (result>=0) {
+				if (bce) {				
+					/* Fill BCE with MN's parameters */
+					mar_create_binding_entry(info, bce);
 					/* Send PBU to CMD for registration */
 					mar_start_registration(bce);
 					dmm_cache_add(bce);
 					dbg("BCE registered\n");
+				} else {
+					dbg("Problems creating BCE\n");
+					break;
 				}
-				else break;
 			} else {
 				dbg("AAA failed\n");
 			}
@@ -244,7 +244,7 @@ int mar_fsm(msg_info_t * info)
 		dbg("pthread_rwlock_unlock(&fsm_lock) %s\n", strerror(mutex_return_code));
 	}
 	dbg("exiting FSM - Waiting for new messages ...\n\n\n");
-	return result;
+	return;
 }
 //---------------------------------------------------------------------------------------------------------------------
 int cmd_fsm(msg_info_t * info)

@@ -39,13 +39,12 @@
 #include <config.h>
 #endif
 #include <stdlib.h>
+#include <arpa/inet.h>
 //---------------------------------------------------------------------------------------------------------------------
 #include "hnp_cache.h"
 #include "dmm_consts.h"
 //---------------------------------------------------------------------------------------------------------------------
-#ifdef USE_RADIUS
-#	include "freeradius-client.h"
-#endif
+
 #include "util.h"
 #ifdef ENABLE_VT
 #    include "vt.h"
@@ -55,19 +54,7 @@
 //---------------------------------------------------------------------------------------------------------------------
 
 static mnid_hnp_t g_mn_hn_map[MAX_MOBILES];
-
 static int g_mn_count = 0;
-#ifdef USE_RADIUS
-#	define RADIUS_MSG_MAX_SIZE      4096
-#	define RADIUS_USERNAME_MAX_SIZE 256
-static rc_handle*			g_rh       = NULL;
-static char*				g_default_realm = NULL;
-
-static char 				msg[RADIUS_MSG_MAX_SIZE];
-static char					g_username[RADIUS_USERNAME_MAX_SIZE];
-static char					g_username_realm[RADIUS_USERNAME_MAX_SIZE];
-static char					g_passwd[AUTH_PASS_LEN + 1];
-#endif
 //-----------------------------------------------------------------------------
 struct in6_addr EUI64_to_EUI48(struct in6_addr iid)
 {
@@ -139,56 +126,27 @@ void cmd_mn_to_hnp_cache_init(void)
     memset((void*)g_mn_hn_map, 0, sizeof(mnid_hnp_t) * MAX_MOBILES);
 }
 //-----------------------------------------------------------------------------
-
-#ifdef USE_RADIUS
-int dmm_mn_to_hnp_cache_init(void)
-{
-	dbg ("\n");
-    memset(g_mn_hn_map, 0, sizeof(mnid_hnp_t) * MAX_MOBILES);
-    rc_openlog("pmip_radius_client");
-	if ((g_rh = rc_read_config(conf.RadiusClientConfigFile)) == NULL) {
-		dbg ("ERROR INIT CLIENT RADIUS\n");
-        	return ERROR_RC;
-	} else {
-        dbg ("RADIUS client radius read config file OK\n");
-    }
-
-    if (rc_read_dictionary(g_rh, rc_conf_str(g_rh, "dictionary")) != 0) {
-        dbg ("ERROR INIT CLIENT RADIUS DICTIONNARY\n");
-        return ERROR_RC;
-    } else {
-        dbg ("client radius read dictionnary file OK\n");
-    }
-    g_default_realm = rc_conf_str(g_rh, "default_realm");
-    return 0;
-}
-#else
 int dmm_mn_to_hnp_cache_init (void)
 {
     FILE               *fp;
-    char                str_addr[40], str_addr_iid[40];
-    struct in6_addr     addr, addr1;
-    unsigned int        ap, ap1;
-    int                 i, j;
-
+    char                str_hn_prefix[INET6_ADDRSTRLEN];
+    uint8_t		temp[6];
+    int                 j;
     memset(g_mn_hn_map, 0, sizeof(mnid_hnp_t) * MAX_MOBILES);
+    memset(temp, 0, 6*sizeof(uint8_t));
     j = 0;
     if ((fp = fopen (DMM_USERS, "r")) == NULL) {
         printf ("can't open %s \n", DMM_USERS);
         exit (0);
     }
-    while ((fscanf (fp, "%32s %32s\n", str_addr, str_addr_iid) != EOF) && (j < MAX_MOBILES)) {
-        for (i = 0; i < 16; i++) {
-            sscanf (str_addr + i * 2, "%02x", &ap);
-            addr.s6_addr[i] = (unsigned char) ap;
-            g_mn_hn_map[j].mn_prefix = addr;
-            sscanf (str_addr_iid + i * 2, "%02x", &ap1);
-            addr1.s6_addr[i] = (unsigned char) ap1;
-            g_mn_hn_map[j].mn_iid = addr1;
-        }
-        dbg ("%x:%x:%x:%x:%x:%x:%x:%x <=> %x:%x:%x:%x:%x:%x:%x:%x\n", NIP6ADDR (&g_mn_hn_map[j].mn_prefix), NIP6ADDR (&g_mn_hn_map[j].mn_iid));
-        j++;
-        g_mn_count = g_mn_count + 1;
+    while ((fscanf (fp, "%2x:%2x:%2x:%2x:%2x:%2x %s\n", &temp[0], &temp[1], &temp[2], &temp[3], &temp[4], &temp[5], str_hn_prefix) != EOF) && (j < MAX_MOBILES)) {
+	inet_pton(AF_INET6, str_hn_prefix, &g_mn_hn_map[j].mn_prefix);
+	for (int i = 0; i < 6; i++) {
+		g_mn_hn_map[j].mn_iid.s6_addr[i+10] = temp[i];
+	}
+	g_mn_count++;
+	dbg ("USER %d: %x:%x:%x:%x:%x:%x:%x:%x <=> %x:%x:%x:%x:%x:%x:%x:%x\n", g_mn_count, NIP6ADDR (&g_mn_hn_map[j].mn_prefix), NIP6ADDR (&g_mn_hn_map[j].mn_iid));
+	j++;
     }
     fclose (fp);
     if (j >= MAX_MOBILES) {
@@ -197,109 +155,51 @@ int dmm_mn_to_hnp_cache_init (void)
     }
     return 0;
 }
-#endif
+// int dmm_mn_to_hnp_cache_init (void)
+// {
+//     FILE               *fp;
+//     char                str_addr[40], str_addr_iid[40];
+//     struct in6_addr     addr, addr1;
+//     unsigned int        ap, ap1;
+//     int                 i, j;
+// 
+//     memset(g_mn_hn_map, 0, sizeof(mnid_hnp_t) * MAX_MOBILES);
+//     j = 0;
+//     if ((fp = fopen (DMM_USERS, "r")) == NULL) {
+//         printf ("can't open %s \n", DMM_USERS);
+//         exit (0);
+//     }
+//     while ((fscanf (fp, "%32s %32s\n", str_addr, str_addr_iid) != EOF) && (j < MAX_MOBILES)) {
+//         for (i = 0; i < 16; i++) {
+//             sscanf (str_addr + i * 2, "%02x", &ap);
+//             addr.s6_addr[i] = (unsigned char) ap;
+//             g_mn_hn_map[j].mn_prefix = addr;
+//             sscanf (str_addr_iid + i * 2, "%02x", &ap1);
+//             addr1.s6_addr[i] = (unsigned char) ap1;
+//             g_mn_hn_map[j].mn_iid = addr1;
+//         }
+//         dbg ("%x:%x:%x:%x:%x:%x:%x:%x <=> %x:%x:%x:%x:%x:%x:%x:%x\n", NIP6ADDR (&g_mn_hn_map[j].mn_prefix), NIP6ADDR (&g_mn_hn_map[j].mn_iid));
+//         j++;
+//         g_mn_count = g_mn_count + 1;
+//     }
+//     fclose (fp);
+//     if (j >= MAX_MOBILES) {
+//         dbg ("ERROR TOO MANY MAPPINGS DEFINED IN CONFIG FILE\n");
+//         exit (0);
+//     }
+//     return 0;
+// }
 //-----------------------------------------------------------------------------
 
-struct in6_addr mnid_hnp_map(struct in6_addr mnid, int *aaa_result)
+struct in6_addr *mnid_hnp_map(struct in6_addr * mnid)
 {
-    int l_flag = 0;
-#if !defined (USE_RADIUS) || defined(CACHE_RADIUS)
     int j = 0;
     while (j < g_mn_count) {
-        if (IN6_ARE_ADDR_EQUAL(&g_mn_hn_map[j].mn_iid, &mnid)) {
-            l_flag = 1;
-            *aaa_result = 10;
-            return (g_mn_hn_map[j].mn_prefix);
-        }
+        if (IN6_ARE_ADDR_EQUAL(&g_mn_hn_map[j].mn_iid, mnid)) {
+	    dbg("USER %d: prefix to assign: %x:%x:%x:%x:%x:%x:%x:%x \n",j+1, NIP6ADDR(&g_mn_hn_map[j].mn_prefix));
+            return (&g_mn_hn_map[j].mn_prefix);}
         j++;
     }
-    #ifdef CACHE_RADIUS
-    dbg("MNID not in cache  %x:%x:%x:%x:%x:%x:%x:%x  \n", NIP6ADDR(&mnid));
-    #endif
-#endif
-
-#if defined (USE_RADIUS)
-
-    VALUE_PAIR *send, *received;
-    VALUE_PAIR *vp;
-    struct in6_addr prefix;
-    uint32_t service;
-
-    *aaa_result = 0;
-     send = NULL;
-
-    sprintf(g_username, "%04x%04x%04x%04x", ntohs(mnid.s6_addr16[4]), ntohs(mnid.s6_addr16[5]), ntohs(mnid.s6_addr16[6]), ntohs(mnid.s6_addr16[7]));
-	g_username[16] = 0;
-    memset(g_passwd, '\0', AUTH_PASS_LEN + 1);
-	strncpy(g_passwd, conf.RadiusPassword, strlen(conf.RadiusPassword));
-	g_passwd[strlen(conf.RadiusPassword)] = '\0';
-// Fill in User-Name
-
-    strncpy(g_username_realm, g_username, sizeof(g_username_realm));
-// Append default realm
-    if ((strchr(g_username_realm, '@') == NULL) && g_default_realm && (*g_default_realm != '\0')) {
-        strncat(g_username_realm, "@", sizeof(g_username_realm) - strlen(g_username_realm) - 1);
-        strncat(g_username_realm, g_default_realm, sizeof(g_username_realm) - strlen(g_username_realm) - 1);
-    }
-    dbg("RADIUS USER NAME %s\n", g_username_realm);
-    dbg("RADIUS PASSWORD  %s\n", g_passwd);
-    if (rc_avpair_add(g_rh, &send, PW_USER_NAME, g_username_realm, -1, 0) == NULL) {
-        fprintf(stderr, "[RADIUS] ERROR rc_avpair_add PW_USER_NAME\n");
-    } else {
-//
-// Fill in User-Password
-
-    if (rc_avpair_add(g_rh, &send, PW_USER_PASSWORD, g_passwd, -1, 0) == NULL) {
-        fprintf(stderr, "[RADIUS] ERROR rc_avpair_add PW_USER_PASSWORD\n");
-    } else {
-
-// Fill in Service-Type
-
-        service = PW_AUTHENTICATE_ONLY;
-        if (rc_avpair_add(g_rh, &send, PW_SERVICE_TYPE, &service, -1, 0) == NULL) {
-            fprintf(stderr, "[RADIUS] ERROR rc_avpair_add PW_SERVICE_TYPE\n");
-        } else {
-            // result = RESULT always < 0 !!!
-            rc_auth(g_rh, 0, send, &received, msg);
-            {
-                *aaa_result = 0;
-                if (received != NULL) {
-                    if ((vp = rc_avpair_get(received, PW_FRAMED_IPV6_PREFIX, 0)) != NULL) {
-                        *aaa_result += 1;
-                        int netmask = vp->strvalue[1];
-                        int num_bytes = netmask / 8;
-                        int i;
-                        for (i = 0; i < num_bytes; i++) {
-                            prefix.s6_addr[i] = vp->strvalue[2 + i];
-                        }
-                        for (i = num_bytes; i < 16; i++) {
-                            prefix.s6_addr[i] = 0;
-                        }
-                    }
-                    if ((vp = rc_avpair_get(received, PW_FRAMED_INTERFACE_ID, 0)) != NULL) {
-                        *aaa_result += 1;
-                        int i;
-                        for (i = 0; i < 8; i++) {
-                            prefix.s6_addr[8 + i] = prefix.s6_addr[8 + i] | vp->strvalue[i];
-                        }
-                    }
-                    rc_avpair_free(received);
-                }
-                if (*aaa_result >= 2) {
-                    l_flag = 1;
-                    dbg("[RADIUS] Assigned IPv6 @ for MN UID %x:%x:%x:%x:%x:%x:%x:%x <=> %x:%x:%x:%x:%x:%x:%x:%x\n", NIP6ADDR(&mnid), NIP6ADDR(&prefix));
-                    dbg("[RADIUS] \"%s\" Authentication OK\n", g_username);
-                    insert_into_hnp_cache(mnid, prefix);
-                    return prefix;
-                }
-            }
-        }
-    }
-    }
-#endif
     dbg("MN-ID not found\n");
-    struct in6_addr tmp;
-    memset(&tmp, 0, sizeof(struct in6_addr));
-    *aaa_result = -1;
-    return tmp;
+    return NULL;
 }

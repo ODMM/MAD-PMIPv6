@@ -1015,7 +1015,7 @@ int icmp_rs_parse(msg_info_t * info, struct nd_router_solicit *rs, const struct 
 		dbg("No MN-ID from RS\n");
 		return -1;
 	}
-	//else dbg("MN IID: %x:%x:%x:%x:%x:%x:%x:%x\n", NIP6ADDR(&info->mn_iid));
+	else dbg("MN ID: %x:%x:%x:%x:%x:%x:%x:%x\n", NIP6ADDR(&info->mn_iid));
     
 	//MN Link-local address retrieval
 	if (IN6_IS_ADDR_UNSPECIFIED(saddr)) {
@@ -1027,31 +1027,30 @@ int icmp_rs_parse(msg_info_t * info, struct nd_router_solicit *rs, const struct 
 	}
     
 	//MN Link-layer ID (MAC address) retrieval
-	int optlen;
-	uint8_t *opt;
-	optlen = info->length - sizeof(struct nd_router_solicit);
-	opt = (uint8_t *)(rs + 1);
-    	while (optlen > 1) {
-		int olen = opt[1] << 3;
-
-		if (olen > optlen || olen == 0)
-			break;
-
-		if (opt[0] == ND_OPT_SOURCE_LINKADDR) {
-			memset(info->mn_llid, 0, 6);
-			for (int i = 2; i< olen;i++){
-			info->mn_llid[i-2] = opt[i];
-			}
-			break;
-		}
-		optlen -= olen;
-		opt += olen;
-	}
-	if (info->mn_llid == NULL) {
-		dbg("Problems retrieving MN Link Layer ID\n");
-		return -1;
-	} else dbg("MN LLID requesting DMM: %2.2x:%2.2x:%2.2x:%2.2x:%2.2x:%2.2x\n", (info->mn_llid[0]&0xFF), (info->mn_llid[1]&0xFF),
-			(info->mn_llid[2]&0xFF), (info->mn_llid[3]&0xFF) ,(info->mn_llid[4]&0xFF), (info->mn_llid[5]&0xFF));
+// 	int optlen;
+// 	uint8_t *opt;
+// 	optlen = info->length - sizeof(struct nd_router_solicit);
+// 	opt = (uint8_t *)(rs + 1);
+// 	while (optlen > 1) {
+// 		int olen = opt[1] << 3;
+// 		if (olen > optlen || olen == 0)
+// 			break;
+// 		if (opt[0] == ND_OPT_SOURCE_LINKADDR) {
+// 			memset(info->mn_llid, 0, 6);
+// 			for (int i = 2; i< olen;i++){
+// 				printf("%x\n", opt[i]);
+// 				info->mn_llid[i-2] = opt[i];
+// 			}
+// 			break;
+// 		}
+// 		optlen -= olen;
+// 		opt += olen;
+// 	}
+// 	if (info->mn_llid == NULL) {
+// 		dbg("Problems retrieving MN Link Layer ID\n");
+// 		return -1;
+// 	} else dbg("MN LLID requesting DMM: %02x:%02x:%02x:%02x:%02x:%02x\n", (info->mn_llid[0]&0xFF), (info->mn_llid[1]&0xFF),
+// 			(info->mn_llid[2]&0xFF), (info->mn_llid[3]) ,(info->mn_llid[4]), (info->mn_llid[5]&0xFF));
 	
 	return 0;
 }

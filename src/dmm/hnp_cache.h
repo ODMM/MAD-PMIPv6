@@ -72,5 +72,6 @@ protected_dmm_hnp_cache(void cmd_mn_to_hnp_cache_init(void);)
 
 protected_dmm_hnp_cache(int dmm_mn_to_hnp_cache_init(void);)
 
-protected_dmm_hnp_cache(struct in6_addr mnid_hnp_map(struct in6_addr mnid, int *aaa_result);)
+protected_dmm_hnp_cache(struct in6_addr *mnid_hnp_map(struct in6_addr *mnid);)
+/*protected_dmm_hnp_cache(struct in6_addr mnid_hnp_map(struct in6_addr mnid, int *aaa_result);)*/
 #endif

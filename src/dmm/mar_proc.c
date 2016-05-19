@@ -183,6 +183,7 @@ int mar_dereg(dmm_entry * bce, int propagate)
 /**
  * Registration attempt of a MN locally connected: the MAR sends a PBU to the CMD
  */
+//int edge_mcf_start_registration(dmm_entry * bce) 
 int mar_start_registration(dmm_entry * bce)
 {
 	//Create PBU and send to the CMD
@@ -404,53 +405,48 @@ int mar_update_binding_entry(dmm_entry * bce, msg_info_t * info)
 	return update;
 }
 //---------------------------------------------------------------------------------------------------------------------
-int mar_create_binding_entry(msg_info_t * info, dmm_entry * bce)
+//edge_mcf_create_binding_entry(msg_info_t * info, binding_entry * bce)
+void mar_create_binding_entry(msg_info_t * info, dmm_entry * bce)
 {
-	if (bce != NULL) {
-		dbg("Making BCE entry for MN  %x:%x:%x:%x:%x:%x:%x:%x\n", NIP6ADDR(&info->mn_iid));
-		bce->mn_prefix = info->mn_prefix;
-		bce->our_addr = conf.OurAddress;
-		bce->mn_suffix = info->mn_iid;
-		bce->mn_hw_address = EUI64_to_EUI48(info->mn_iid);
-		CONVERT_ID2ADDR(&bce->mn_addr, &bce->mn_prefix, &bce->mn_suffix);
-		bce->mn_serv_mar_addr = conf.OurAddress;
-		bce->mn_serv_cmd_addr = conf.CmdAddress;
-		bce->mar_list = NULL;
-		if (!IN6_IS_ADDR_UNSPECIFIED(&info->mn_link_local_addr))
-			bce->mn_link_local_addr = info->mn_link_local_addr;
-		else {
-			struct in6_addr *link_local = link_local_addr(&bce->mn_suffix);
-			bce->mn_link_local_addr = *link_local;
-		}
-		bce->seqno_out = 0;
-		bce->accTechType = ATT_WLAN; //ATTENTION we need to check the type of iif to fill this field
-		bce->handoffInd = HI_NEW_IF;
-		if (ingress_if.dlif_enabled) {
-			struct dlif_entry *tmp = setup_dlif(&bce->mn_hw_address, &ingress_if.if_llid, &bce->mn_prefix, 1);
-			if (tmp) {
-				bce->link = tmp->dlif_id;
-				bce->mar_hw_address = tmp->dlif_mac;
-				printf("DLIF name: %s, device: %d\n", tmp->dlif_name, tmp->dlif_id);
-				printf("MAC: 	    %x:%x:%x:%x:%x:%x:%x:%x\n", NIP6ADDR(&tmp->dlif_mac));
-				printf("Link Local: %x:%x:%x:%x:%x:%x:%x:%x\n", NIP6ADDR(&tmp->dlif_linklocal));
-			} else {
-				dbg("DLIF setup failed, using PHY IF \n");
-				bce->link = info->iif;
-				bce->mar_hw_address = in6addr_any;
-			}
+	dbg("Creating BCE for MN  %x:%x:%x:%x:%x:%x:%x:%x\n", NIP6ADDR(&info->mn_iid));
+	bce->mn_prefix = info->mn_prefix;
+	bce->our_addr = conf.OurAddress;
+	bce->mn_suffix = info->mn_iid;
+	bce->mn_hw_address = EUI64_to_EUI48(info->mn_iid);
+	CONVERT_ID2ADDR(&bce->mn_addr, &bce->mn_prefix, &bce->mn_suffix);
+	bce->mn_serv_mar_addr = conf.OurAddress;
+	bce->mn_serv_cmd_addr = conf.CmdAddress;
+	bce->mar_list = NULL;
+	if (!IN6_IS_ADDR_UNSPECIFIED(&info->mn_link_local_addr))
+		bce->mn_link_local_addr = info->mn_link_local_addr;
+	else {
+		struct in6_addr *link_local = link_local_addr(&bce->mn_suffix);
+		bce->mn_link_local_addr = *link_local;
+	}
+	bce->seqno_out = 0;
+	bce->accTechType = ATT_WLAN; //ATTENTION we need to check the type of iif to fill this field
+	bce->handoffInd = HI_NEW_IF;
+	if (ingress_if.dlif_enabled) {
+		struct dlif_entry *tmp = setup_dlif(&bce->mn_hw_address, &ingress_if.if_llid, &bce->mn_prefix, 1);
+		if (tmp) {
+			bce->link = tmp->dlif_id;
+			bce->mar_hw_address = tmp->dlif_mac;
+			printf("DLIF name: %s, device: %d\n", tmp->dlif_name, tmp->dlif_id);
+			printf("MAC: 	    %x:%x:%x:%x:%x:%x:%x:%x\n", NIP6ADDR(&tmp->dlif_mac));
+			printf("Link Local: %x:%x:%x:%x:%x:%x:%x:%x\n", NIP6ADDR(&tmp->dlif_linklocal));
 		} else {
+			dbg("DLIF setup failed, using PHY IF \n");
 			bce->link = info->iif;
 			bce->mar_hw_address = in6addr_any;
 		}
-		bce->type = BCE_TEMP;
-		
-		dbg("Adding route for : %x:%x:%x:%x:%x:%x:%x:%x\n", NIP6ADDR(get_mn_addr(bce)));
-		mar_setup_route(&bce->mn_prefix, 64, bce->link, 0);
 	} else {
-		dbg("Problems creating BCE\n");
-		return -1;
+		bce->link = info->iif;
+		bce->mar_hw_address = in6addr_any;
 	}
-	return 0;
+	bce->type = BCE_TEMP;
+	dbg("Adding route for : %x:%x:%x:%x:%x:%x:%x:%x\n", NIP6ADDR(get_mn_addr(bce)));
+	mar_setup_route(&bce->mn_prefix, 64, bce->link, 0);
+	return;
 }
 //---------------------------------------------------------------------------------------------------------------------
 int mar_send_ra(struct in6_addr *mn_prefix, int interface, struct in6_addr *dst, int dup)
